@@ -23,6 +23,33 @@ pip install -e ".[dev]"
 
 ## Development
 
+### Quick Start with Makefile
+
+The project includes a Makefile for common development tasks:
+
+```bash
+# Show all available commands
+make help
+
+# Run all checks (format, lint, test)
+make check
+
+# Run tests
+make test
+
+# Run tests with coverage
+make coverage
+
+# Format code
+make format
+
+# Run linter
+make lint
+
+# Clean build artifacts
+make clean
+```
+
 ### Running Tests
 
 ```bash
