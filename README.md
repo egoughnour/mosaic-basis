@@ -63,6 +63,8 @@ pytest --cov=mosaic_basis --cov-report=html
 pytest tests/test_basic.py
 ```
 
+The richer test suite downloads a tiny public clip via `yt-dlp` to validate the timestamp-aware mosaic and preview flows. Make sure you have network access when running `pytest`; if the download fails (e.g., offline CI), the integration tests will automatically skip.
+
 ### Code Quality
 
 ```bash
