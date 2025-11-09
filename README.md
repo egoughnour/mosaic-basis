@@ -63,6 +63,28 @@ pytest --cov=mosaic_basis --cov-report=html
 pytest tests/test_basic.py
 ```
 
+The richer test suite downloads a tiny public clip via `yt-dlp` to validate the timestamp-aware mosaic and preview flows. Make sure you have network access when running `pytest`; if the download fails (e.g., offline CI), the integration tests will automatically skip.
+
+### Downloading Videos via yt-dlp
+
+Install the optional extra to enable the built-in downloader:
+
+```bash
+pip install -e ".[yt]"
+```
+
+You can then let the pipeline fetch a clip directly:
+
+```bash
+python src/video_omp_pipeline.py \
+  --video ./work/input.mp4 \
+  --download-url https://www.youtube.com/watch?v=V3-HL7MgzzA \
+  --work ./work \
+  --download-max-height 360
+```
+
+Use `--download-overwrite` to force a re-download if the target file already exists.
+
 ### Code Quality
 
 ```bash
