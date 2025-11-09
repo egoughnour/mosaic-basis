@@ -1,4 +1,5 @@
 
+import argparse
 import os
 import sys
 import json
@@ -23,6 +24,11 @@ try:
     from temporal_omp_aug import augment_dictionary_framewise
 except Exception as _e:
     augment_dictionary_framewise = None
+
+try:
+    from yt_dlp import YoutubeDL
+except Exception as _e:
+    YoutubeDL = None
 
 
 def _ensure_dir(path: str) -> None:
@@ -117,6 +123,52 @@ def _timestamps_for_extracted_frames(video_path: str, out_count: int, fps: Optio
     while len(ts) < out_count:
         ts.append(last)
     return ts
+
+
+def download_video_with_ytdlp(
+    url: str,
+    out_path: str,
+    *,
+    max_height: int = 360,
+    overwrite: bool = True,
+) -> str:
+    """Download a remote clip via yt-dlp and return the resulting path."""
+    if YoutubeDL is None:
+        raise ImportError("yt-dlp is not installed. Install with 'pip install mosaic-basis[yt]'.")
+
+    if not url:
+        raise ValueError("URL must be provided to download_video_with_ytdlp.")
+
+    final_path = out_path
+    root, ext = os.path.splitext(final_path)
+    if not ext:
+        final_path = f"{final_path}.mp4"
+    out_dir = os.path.dirname(final_path) or "."
+    _ensure_dir(out_dir)
+
+    if os.path.exists(final_path):
+        if not overwrite:
+            return final_path
+        os.remove(final_path)
+
+    format_selector = f"mp4[height<={max_height}]/mp4/best"
+    ydl_opts = {
+        "format": format_selector,
+        "quiet": True,
+        "noprogress": True,
+        "noplaylist": True,
+        "nocheckcertificate": True,
+        "outtmpl": final_path,
+        "merge_output_format": "mp4",
+    }
+
+    with YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
+
+    if not os.path.isfile(final_path):
+        raise RuntimeError(f"yt-dlp did not produce the expected file at {final_path}")
+
+    return final_path
 
 
 def save_to_dir(
@@ -428,8 +480,7 @@ def process_video_to_omp(
     return summary
 
 
-def _parse_cli(argv: List[str]) -> Tuple[str, str, PipelineConfig]:
-    import argparse
+def _parse_cli(argv: List[str]) -> Tuple[argparse.Namespace, PipelineConfig]:
     p = argparse.ArgumentParser("video_omp_pipeline")
     p.add_argument("--video", required=True, help="Input video path")
     p.add_argument("--work", required=True, help="Working directory for frames and outputs")
@@ -452,6 +503,10 @@ def _parse_cli(argv: List[str]) -> Tuple[str, str, PipelineConfig]:
     p.add_argument("--mode", default="empirical", choices=["empirical","global"])
     p.add_argument("--k", type=int, default=4)
 
+    p.add_argument("--download-url", default=None, help="Optional URL to download via yt-dlp into --video before processing.")
+    p.add_argument("--download-overwrite", action="store_true", help="Re-download even if the file already exists.")
+    p.add_argument("--download-max-height", type=int, default=360, help="Maximum video height to request when downloading.")
+
     args = p.parse_args(argv)
 
     cfg = PipelineConfig(
@@ -461,14 +516,23 @@ def _parse_cli(argv: List[str]) -> Tuple[str, str, PipelineConfig]:
         detect_area_thresh=args.detect_area_thresh,
         rho=args.rho, tau=args.tau, safety=args.safety, gamma=args.gamma, mode=args.mode, k_sparsity=args.k
     )
-    return args.video, args.work, cfg
+    return args, cfg
 
 
 def main(argv: Optional[List[str]] = None):
     if argv is None:
         argv = sys.argv[1:]
-    video, work, cfg = _parse_cli(argv)
-    summary = process_video_to_omp(video, work, cfg)
+    args, cfg = _parse_cli(argv)
+    work = args.work
+    video_path = args.video
+    if args.download_url:
+        video_path = download_video_with_ytdlp(
+            args.download_url,
+            video_path,
+            max_height=args.download_max_height,
+            overwrite=args.download_overwrite or args.overwrite,
+        )
+    summary = process_video_to_omp(video_path, work, cfg)
     out_json = os.path.join(work, "omp_results.json")
     print(f"Wrote: {out_json}")
     print(json.dumps({k: v for k, v in summary.items() if k != "omp_results"}, indent=2))
