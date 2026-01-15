@@ -1,5 +1,10 @@
 # mosaic-basis
 
+![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
+   ![License](https://img.shields.io/badge/license-MIT-blue.svg)
+   ![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)
+   ![Linting: Ruff](https://img.shields.io/badge/linting-ruff-red.svg)
+
 Forward-biased frame selection for OMP to reconstruct frame sequences and object trajectories as bases.
 
 ## Installation
