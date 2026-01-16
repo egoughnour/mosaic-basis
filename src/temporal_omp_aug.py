@@ -1,4 +1,3 @@
-
 import numpy as np
 from sklearn.preprocessing import normalize
 
@@ -8,6 +7,7 @@ __all__ = [
     "augment_dictionary_framewise",
     "augment_dictionary_pixelwise",
 ]
+
 
 def choose_gamma(y, X, delta_w, tau=0.05, safety=1.25, mode="global"):
     """
@@ -107,7 +107,16 @@ def _prep_framewise_matrix(ycbcr_series):
     return X, norms
 
 
-def augment_dictionary_framewise(ycbcr_series, target_vec, rho=0.02, tau=0.05, safety=1.25, gamma=None, mode="global", renormalize=True):
+def augment_dictionary_framewise(
+    ycbcr_series,
+    target_vec,
+    rho=0.02,
+    tau=0.05,
+    safety=1.25,
+    gamma=None,
+    mode="global",
+    renormalize=True,
+):
     """
     Build the augmented dictionary for OMP when each frame is a 3-vector [Y, Cb, Cr].
 
@@ -145,7 +154,7 @@ def augment_dictionary_framewise(ycbcr_series, target_vec, rho=0.02, tau=0.05, s
     if gamma is None:
         gamma = choose_gamma(y_norm, X, delta_w, tau=tau, safety=safety, mode=mode)
 
-    X_aug = np.vstack([X, gamma * V])        # ((3+N), N)
+    X_aug = np.vstack([X, gamma * V])  # ((3+N), N)
     y_aug = np.concatenate([y_norm, np.zeros(N)])
 
     if renormalize:
@@ -155,7 +164,16 @@ def augment_dictionary_framewise(ycbcr_series, target_vec, rho=0.02, tau=0.05, s
     return X_aug, y_aug, float(gamma), meta
 
 
-def augment_dictionary_pixelwise(frames_ycbcr, target_frame, rho=0.02, tau=0.05, safety=1.25, gamma=None, mode="global", renormalize=True):
+def augment_dictionary_pixelwise(
+    frames_ycbcr,
+    target_frame,
+    rho=0.02,
+    tau=0.05,
+    safety=1.25,
+    gamma=None,
+    mode="global",
+    renormalize=True,
+):
     """
     Pixelwise representation for completeness (if later you move from 3 features per frame to full images).
     Input frames shape: (N, H, W, 3). Target: (H, W, 3).
@@ -180,7 +198,7 @@ def augment_dictionary_pixelwise(frames_ycbcr, target_frame, rho=0.02, tau=0.05,
     if gamma is None:
         gamma = choose_gamma(y, X, delta_w, tau=tau, safety=safety, mode=mode)
 
-    X_aug = np.vstack([X, gamma * V])        # ((P+N), N)
+    X_aug = np.vstack([X, gamma * V])  # ((P+N), N)
     y_aug = np.concatenate([y, np.zeros(N)])
 
     if renormalize:

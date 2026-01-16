@@ -1,4 +1,3 @@
-
 import os
 import json
 from typing import Dict, List, Tuple, Optional
@@ -10,8 +9,10 @@ try:
 except Exception as _e:
     cv2 = None
 
+
 def _ensure_dir(path: str) -> None:
     os.makedirs(path, exist_ok=True)
+
 
 def _load_image(path: str) -> Optional[np.ndarray]:
     if cv2 is None:
@@ -19,16 +20,25 @@ def _load_image(path: str) -> Optional[np.ndarray]:
     img = cv2.imread(path, cv2.IMREAD_COLOR)
     return img
 
-def _draw_border(img: np.ndarray, color=(0,255,255), thickness:int=3):
-    h, w = img.shape[:2]
-    cv2.rectangle(img, (0,0), (w-1,h-1), color, thickness)
 
-def _put_label(img: np.ndarray, text: str, org=(5,20), color=(255,255,255)):
+def _draw_border(img: np.ndarray, color=(0, 255, 255), thickness: int = 3):
+    h, w = img.shape[:2]
+    cv2.rectangle(img, (0, 0), (w - 1, h - 1), color, thickness)
+
+
+def _put_label(img: np.ndarray, text: str, org=(5, 20), color=(255, 255, 255)):
     cv2.putText(img, text, org, cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2, cv2.LINE_AA)
 
-def _draw_timeline_seconds(img: np.ndarray, total_sec: float, current_sec: float,
-                           active_min_sec: float, active_max_sec: float,
-                           key_secs: Optional[List[float]] = None, height: int = 10):
+
+def _draw_timeline_seconds(
+    img: np.ndarray,
+    total_sec: float,
+    current_sec: float,
+    active_min_sec: float,
+    active_max_sec: float,
+    key_secs: Optional[List[float]] = None,
+    height: int = 10,
+):
     h, w = img.shape[:2]
     bar_h = max(6, height)
     pad = 2
@@ -47,6 +57,7 @@ def _draw_timeline_seconds(img: np.ndarray, total_sec: float, current_sec: float
             xk = x0 + int(((min(total_sec, max(0.0, s))) / length) * (x1 - x0))
             cv2.line(img, (xk, y0), (xk, y0 + bar_h), (0, 200, 0), 1)
 
+
 def compose_mosaic(
     frames_dir: str,
     tracklets_json: str,
@@ -59,7 +70,7 @@ def compose_mosaic(
     tile_h: int = 256,
     fps: int = 15,
     highlight_keyframes: bool = True,
-    timeline: bool = True
+    timeline: bool = True,
 ):
     if cv2 is None:
         raise ImportError("OpenCV (cv2) is required for mosaic composition.")
@@ -77,7 +88,13 @@ def compose_mosaic(
             tsj = json.load(f)
             ts = tsj.get("timestamps_sec", None)
 
-    frame_files = sorted([os.path.join(frames_dir, f) for f in os.listdir(frames_dir) if f.lower().endswith(".png")])
+    frame_files = sorted(
+        [
+            os.path.join(frames_dir, f)
+            for f in os.listdir(frames_dir)
+            if f.lower().endswith(".png")
+        ]
+    )
     if not frame_files:
         raise RuntimeError(f"No frames found in {frames_dir}")
     total_frames = len(frame_files)
@@ -95,8 +112,8 @@ def compose_mosaic(
     max_tiles = grid_rows * grid_cols
     selected_ids = track_ids[:max_tiles]
 
-    per_track_maps: Dict[int, Dict[int, Tuple[Tuple[int,int,int,int], int]]] = {}
-    active_span_sec: Dict[int, Tuple[float,float]] = {}
+    per_track_maps: Dict[int, Dict[int, Tuple[Tuple[int, int, int, int], int]]] = {}
+    active_span_sec: Dict[int, Tuple[float, float]] = {}
     key_secs_map: Dict[int, List[float]] = {}
 
     for tid in selected_ids:
@@ -111,7 +128,8 @@ def compose_mosaic(
             amin = ts[gfis[0]]
             amax = ts[gfis[-1]]
         else:
-            amin = 0.0; amax = 0.0
+            amin = 0.0
+            amax = 0.0
         active_span_sec[tid] = (amin, amax)
         k_local = support_map_local.get(tid, set())
         key_secs = []
@@ -126,7 +144,7 @@ def compose_mosaic(
     out = cv2.VideoWriter(out_video_path, fourcc, fps, (mosaic_w, mosaic_h))
 
     black_tile = np.zeros((tile_h, tile_w, 3), dtype=np.uint8)
-    border_color = (0,255,255)
+    border_color = (0, 255, 255)
 
     for global_idx, frame_path in enumerate(frame_files):
         frame_img = _load_image(frame_path)
@@ -147,14 +165,20 @@ def compose_mosaic(
                     if global_idx in mapping:
                         bbox, local_idx = mapping[global_idx]
                         x, y, w, h = bbox
-                        x0 = max(0, x); y0 = max(0, y)
-                        x1 = min(W, x + w); y1 = min(H, y + h)
+                        x0 = max(0, x)
+                        y0 = max(0, y)
+                        x1 = min(W, x + w)
+                        y1 = min(H, y + h)
                         if x1 > x0 and y1 > y0:
                             crop = frame_img[y0:y1, x0:x1]
-                            tile = cv2.resize(crop, (tile_w, tile_h), interpolation=cv2.INTER_AREA)
+                            tile = cv2.resize(
+                                crop, (tile_w, tile_h), interpolation=cv2.INTER_AREA
+                            )
                         else:
                             tile = black_tile.copy()
-                        if highlight_keyframes and (local_idx in support_map_local.get(tid, set())):
+                        if highlight_keyframes and (
+                            local_idx in support_map_local.get(tid, set())
+                        ):
                             _draw_border(tile, color=border_color, thickness=3)
                         _put_label(tile, f"id={tid} t={current_sec:.2f}s")
                     else:
@@ -162,11 +186,19 @@ def compose_mosaic(
 
                     if timeline:
                         amin, amax = active_span_sec.get(tid, (0.0, 0.0))
-                        _draw_timeline_seconds(tile, total_sec, current_sec, amin, amax, key_secs_map.get(tid, []), height=10)
+                        _draw_timeline_seconds(
+                            tile,
+                            total_sec,
+                            current_sec,
+                            amin,
+                            amax,
+                            key_secs_map.get(tid, []),
+                            height=10,
+                        )
 
                 y_start = r * tile_h
                 x_start = c * tile_w
-                mosaic[y_start:y_start+tile_h, x_start:x_start+tile_w] = tile
+                mosaic[y_start : y_start + tile_h, x_start : x_start + tile_w] = tile
                 tile_i += 1
 
         out.write(mosaic)
@@ -178,18 +210,23 @@ def compose_mosaic(
         grid_cols=grid_cols,
         tile_w=tile_w,
         tile_h=tile_h,
-        fps=fps
+        fps=fps,
     )
 
 
 if __name__ == "__main__":
     import argparse
+
     p = argparse.ArgumentParser("mosaic_compositor")
     p.add_argument("--frames-dir", required=True)
     p.add_argument("--tracklets-json", required=True)
     p.add_argument("--omp-results-json", required=True)
     p.add_argument("--out", required=True)
-    p.add_argument("--timestamps-json", default=None, help="frames_timestamps.json with timestamps_sec")
+    p.add_argument(
+        "--timestamps-json",
+        default=None,
+        help="frames_timestamps.json with timestamps_sec",
+    )
     p.add_argument("--rows", type=int, default=2)
     p.add_argument("--cols", type=int, default=2)
     p.add_argument("--tile-w", type=int, default=256)
@@ -211,6 +248,6 @@ if __name__ == "__main__":
         tile_h=args.tile_h,
         fps=args.fps,
         highlight_keyframes=(not args.no_highlight),
-        timeline=(not args.no_timeline)
+        timeline=(not args.no_timeline),
     )
     print(json.dumps(res, indent=2))
