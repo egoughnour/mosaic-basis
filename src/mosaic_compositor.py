@@ -7,7 +7,7 @@ import numpy as np
 try:
     import cv2
 except ImportError:
-    cv2 = None
+    cv2 = None  # type: ignore[assignment]
 
 
 def _ensure_dir(path: str) -> None:
@@ -21,12 +21,19 @@ def _load_image(path: str) -> Optional[np.ndarray]:
     return img
 
 
-def _draw_border(img: np.ndarray, color=(0, 255, 255), thickness: int = 3):
+def _draw_border(
+    img: np.ndarray, color: tuple[int, int, int] = (0, 255, 255), thickness: int = 3
+) -> None:
     h, w = img.shape[:2]
     cv2.rectangle(img, (0, 0), (w - 1, h - 1), color, thickness)
 
 
-def _put_label(img: np.ndarray, text: str, org=(5, 20), color=(255, 255, 255)):
+def _put_label(
+    img: np.ndarray,
+    text: str,
+    org: tuple[int, int] = (5, 20),
+    color: tuple[int, int, int] = (255, 255, 255),
+) -> None:
     cv2.putText(img, text, org, cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2, cv2.LINE_AA)
 
 
@@ -38,7 +45,7 @@ def _draw_timeline_seconds(
     active_max_sec: float,
     key_secs: Optional[list[float]] = None,
     height: int = 10,
-):
+) -> None:
     h, w = img.shape[:2]
     bar_h = max(6, height)
     pad = 2
@@ -71,7 +78,7 @@ def compose_mosaic(
     fps: int = 15,
     highlight_keyframes: bool = True,
     timeline: bool = True,
-):
+) -> dict[str, object]:
     if cv2 is None:
         raise ImportError("OpenCV (cv2) is required for mosaic composition.")
 
@@ -140,7 +147,7 @@ def compose_mosaic(
 
     mosaic_w = grid_cols * tile_w
     mosaic_h = grid_rows * tile_h
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # type: ignore[attr-defined]
     out = cv2.VideoWriter(out_video_path, fourcc, fps, (mosaic_w, mosaic_h))
 
     black_tile = np.zeros((tile_h, tile_w, 3), dtype=np.uint8)

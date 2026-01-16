@@ -7,20 +7,25 @@ import numpy as np
 try:
     import cv2
 except ImportError:
-    cv2 = None
+    cv2 = None  # type: ignore[assignment]
 
 
 def _ensure_dir(path: str) -> None:
     os.makedirs(path, exist_ok=True)
 
 
-def _load_image(path: str):
+def _load_image(path: str) -> np.ndarray:
     if cv2 is None:
         raise ImportError("OpenCV (cv2) is required for previews.")
-    return cv2.imread(path, cv2.IMREAD_COLOR)
+    return cv2.imread(path, cv2.IMREAD_COLOR)  # type: ignore[return-value]
 
 
-def _put_label(img, text: str, org=(5, 20), color=(255, 255, 255)):
+def _put_label(
+    img: np.ndarray,
+    text: str,
+    org: tuple[int, int] = (5, 20),
+    color: tuple[int, int, int] = (255, 255, 255),
+) -> None:
     cv2.putText(img, text, org, cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2, cv2.LINE_AA)
 
 
@@ -32,7 +37,7 @@ def _draw_timeline_seconds(
     active_max_sec: float,
     key_secs: Optional[list[float]] = None,
     height: int = 10,
-):
+) -> None:
     h, w = img.shape[:2]
     bar_h = max(6, height)
     pad = 2
@@ -64,7 +69,7 @@ def export_track_previews(
     make_contact_sheet: bool = True,
     contact_sheet_cols: int = 8,
     timeline: bool = True,
-):
+) -> dict[str, str]:
     if cv2 is None:
         raise ImportError("OpenCV (cv2) is required for previews.")
 
@@ -104,7 +109,7 @@ def export_track_previews(
         support_map[r["track_id"]] = s
 
     width, height = crop_size
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # type: ignore[attr-defined]
 
     for tid_str, t in tracklets.items():
         tid = int(tid_str)

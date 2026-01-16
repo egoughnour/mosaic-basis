@@ -12,22 +12,22 @@ import numpy as np
 try:
     import cv2
 except ImportError:
-    cv2 = None
+    cv2 = None  # type: ignore[assignment]
 
 try:
     from sklearn.linear_model import OrthogonalMatchingPursuit
 except ImportError:
-    OrthogonalMatchingPursuit = None
+    OrthogonalMatchingPursuit = None  # type: ignore[misc,assignment]
 
 try:
     from temporal_omp_aug import augment_dictionary_framewise
 except ImportError:
-    augment_dictionary_framewise = None
+    augment_dictionary_framewise = None  # type: ignore[misc,assignment]
 
 try:
     from yt_dlp import YoutubeDL
 except ImportError:
-    YoutubeDL = None
+    YoutubeDL = None  # type: ignore[misc,assignment]
 
 
 def _ensure_dir(path: str) -> None:
@@ -64,7 +64,7 @@ def _bgr_to_ycbcr_mean(
     ycrcb = cv2.cvtColor(roi, cv2.COLOR_BGR2YCrCb)
     mean_ycrcb = ycrcb.reshape(-1, 3).mean(axis=0)
     Y, Cr, Cb = mean_ycrcb.tolist()
-    return np.array([Y, Cb, Cr], dtype=float)
+    return np.array([Y, Cb, Cr], dtype=float)  # type: ignore[no-any-return]
 
 
 def _ffprobe_timestamps(video_path: str) -> Optional[list[float]]:
@@ -268,19 +268,19 @@ class Tracklet:
     ycbcr_series: list[list[float]]
 
 
-def _create_tracker(tracker_type: str = "CSRT"):
+def _create_tracker(tracker_type: str = "CSRT"):  # type: ignore[no-untyped-def]
     if cv2 is None:
         raise ImportError("OpenCV not available; trackers require OpenCV.")
     t = tracker_type.upper()
     if t == "KCF":
-        return cv2.TrackerKCF_create()
+        return cv2.TrackerKCF_create()  # type: ignore[attr-defined]
     if t == "CSRT":
-        return cv2.TrackerCSRT_create()
+        return cv2.TrackerCSRT_create()  # type: ignore[attr-defined]
     if t == "MOSSE":
-        return cv2.TrackerMOSSE_create()
+        return cv2.TrackerMOSSE_create()  # type: ignore[attr-defined]
     if t == "MIL":
-        return cv2.TrackerMIL_create()
-    return cv2.TrackerCSRT_create()
+        return cv2.TrackerMIL_create()  # type: ignore[attr-defined]
+    return cv2.TrackerCSRT_create()  # type: ignore[attr-defined]
 
 
 def _bbox_iou(a: tuple[int, int, int, int], b: tuple[int, int, int, int]) -> float:
@@ -317,7 +317,7 @@ def detect_and_track(
         history=bg_history, varThreshold=var_threshold, detectShadows=False
     )
 
-    trackers = {}
+    trackers: dict = {}
     next_id = 1
     tracklets: dict[int, Tracklet] = {}
 
@@ -363,10 +363,16 @@ def detect_and_track(
                 to_remove.append(tid)
                 continue
             trackers[tid] = (tr, bbox)
-            ycbcr = _bgr_to_ycbcr_mean(frame, tuple(map(int, bbox)))
+            bbox_int: tuple[int, int, int, int] = (
+                int(bbox[0]),
+                int(bbox[1]),
+                int(bbox[2]),
+                int(bbox[3]),
+            )
+            ycbcr = _bgr_to_ycbcr_mean(frame, bbox_int)
             tl = tracklets[tid]
             tl.frames.append(frame_idx)
-            tl.bboxes.append(tuple(map(int, bbox)))
+            tl.bboxes.append(bbox_int)
             tl.ycbcr_series.append(ycbcr.tolist())
 
         for tid in to_remove:
@@ -604,7 +610,7 @@ def _parse_cli(argv: list[str]) -> tuple[argparse.Namespace, PipelineConfig]:
     return args, cfg
 
 
-def main(argv: Optional[list[str]] = None):
+def main(argv: Optional[list[str]] = None) -> None:
     if argv is None:
         argv = sys.argv[1:]
     args, cfg = _parse_cli(argv)
