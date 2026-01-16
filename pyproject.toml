@@ -113,6 +113,7 @@ select = [
 ]
 ignore = [
     "E501",  # line too long, handled by black
+    "E203",  # whitespace before ':', conflicts with black
 ]
 
 [tool.ruff.lint.isort]
