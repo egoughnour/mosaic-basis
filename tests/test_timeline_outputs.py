@@ -51,7 +51,9 @@ def downloaded_video(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
 
 @pytest.fixture(scope="session")
-def extracted_sample(tmp_path_factory: pytest.TempPathFactory, downloaded_video: Path) -> dict:
+def extracted_sample(
+    tmp_path_factory: pytest.TempPathFactory, downloaded_video: Path
+) -> dict:
     frames_root = tmp_path_factory.mktemp("frames")
     frames_dir = frames_root / "frames"
     frames, timestamps = video_omp_pipeline.save_to_dir(

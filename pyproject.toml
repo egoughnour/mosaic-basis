@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mosaic-basis"
-version = "0.1.0"
+version = "0.2.0"
 description = "Forward-biased frame selection for OMP to reconstruct frame sequences and object trajectories as bases"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = {text = "MIT"}
 authors = [
     {name = "E Goughnour", email = "e.goughnour@gmail.com"}
@@ -22,7 +22,6 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -94,12 +93,12 @@ exclude_lines = [
 
 [tool.black]
 line-length = 88
-target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+target-version = ['py39', 'py310', 'py311', 'py312']
 include = '\.pyi?$'
 
 [tool.ruff]
 line-length = 88
-target-version = "py38"
+target-version = "py39"
 
 [tool.ruff.lint]
 select = [
@@ -113,13 +112,40 @@ select = [
 ]
 ignore = [
     "E501",  # line too long, handled by black
+    #"E203",  # whitespace before ':', conflicts with black
+    #"W191",  # indentation contains tabs
+    #"E111",  # indentation is not a multiple of four
+    #"E114",  # indentation is not a multiple of four (comment)
+    #"E117",  # over-indented
+    #"D206",  # indent with spaces
+    #"D300",  # use triple double quotes
+    #"COM812", # missing trailing comma
+    #"COM819", # prohibited trailing comma
+    #"ISC001", # single line implicit string concatenation
+    #"ISC002", # multi-line implicit string concatenation
+    #"Q000",  # bad quotes inline string
+    #"Q001",  # bad quotes multiline string
+    #"Q002",  # bad quotes docstring
+    #"Q003",  # avoidable escaped quote
 ]
+
+extend-ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
 
 [tool.ruff.lint.isort]
 known-first-party = ["mosaic_basis"]
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false

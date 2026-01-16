@@ -1,3 +1,4 @@
+from typing import Any, Optional
 
 import numpy as np
 from sklearn.preprocessing import normalize
@@ -9,7 +10,15 @@ __all__ = [
     "augment_dictionary_pixelwise",
 ]
 
-def choose_gamma(y, X, delta_w, tau=0.05, safety=1.25, mode="global"):
+
+def choose_gamma(
+    y: np.ndarray,
+    X: np.ndarray,
+    delta_w: float,
+    tau: float = 0.05,
+    safety: float = 1.25,
+    mode: str = "global",
+) -> float:
     """
     Compute a global scale gamma that guarantees a forward step in OMP under the inequality:
         alpha_t * gamma^2 * (w_{t+1} - w_t) > 2 * M_t
@@ -49,7 +58,7 @@ def choose_gamma(y, X, delta_w, tau=0.05, safety=1.25, mode="global"):
     return float(gamma)
 
 
-def build_temporal_tags(N, rho=0.02):
+def build_temporal_tags(N: int, rho: float = 0.02) -> tuple[np.ndarray, np.ndarray]:
     """
     Build two-hot temporal tags v_t = sqrt(w_t) e_t + sqrt(w_{t+1}) e_{t+1}
     with w_t = 1 + rho * t. Returns the tag matrix V whose column t is v_t,
@@ -82,7 +91,9 @@ def build_temporal_tags(N, rho=0.02):
     return V, w
 
 
-def _prep_framewise_matrix(ycbcr_series):
+def _prep_framewise_matrix(
+    ycbcr_series: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Framewise representation: each frame is a 3-vector [Y, Cb, Cr].
     Input shape: (N_frames, 3). Returns X (3, N) and a normalizer for columns.
@@ -101,13 +112,22 @@ def _prep_framewise_matrix(ycbcr_series):
     """
     if ycbcr_series.ndim != 2 or ycbcr_series.shape[1] != 3:
         raise ValueError("Expected shape (N_frames, 3) for ycbcr_series.")
-    X = ycbcr_series.astype(float).T  # (3, N)
+    X: np.ndarray = ycbcr_series.astype(float).T  # (3, N)
     norms = np.linalg.norm(X, axis=0) + 1e-12
     X = X / norms
     return X, norms
 
 
-def augment_dictionary_framewise(ycbcr_series, target_vec, rho=0.02, tau=0.05, safety=1.25, gamma=None, mode="global", renormalize=True):
+def augment_dictionary_framewise(
+    ycbcr_series: np.ndarray,
+    target_vec: np.ndarray,
+    rho: float = 0.02,
+    tau: float = 0.05,
+    safety: float = 1.25,
+    gamma: Optional[float] = None,
+    mode: str = "global",
+    renormalize: bool = True,
+) -> tuple[np.ndarray, np.ndarray, float, dict[str, Any]]:
     """
     Build the augmented dictionary for OMP when each frame is a 3-vector [Y, Cb, Cr].
 
@@ -145,17 +165,34 @@ def augment_dictionary_framewise(ycbcr_series, target_vec, rho=0.02, tau=0.05, s
     if gamma is None:
         gamma = choose_gamma(y_norm, X, delta_w, tau=tau, safety=safety, mode=mode)
 
-    X_aug = np.vstack([X, gamma * V])        # ((3+N), N)
+    X_aug = np.vstack([X, gamma * V])  # ((3+N), N)
     y_aug = np.concatenate([y_norm, np.zeros(N)])
 
     if renormalize:
         X_aug = normalize(X_aug, axis=0)
 
-    meta = {"N": N, "rho": rho, "delta_w": delta_w, "norms": norms, "V": V, "w": w, "gamma": gamma}
+    meta = {
+        "N": N,
+        "rho": rho,
+        "delta_w": delta_w,
+        "norms": norms,
+        "V": V,
+        "w": w,
+        "gamma": gamma,
+    }
     return X_aug, y_aug, float(gamma), meta
 
 
-def augment_dictionary_pixelwise(frames_ycbcr, target_frame, rho=0.02, tau=0.05, safety=1.25, gamma=None, mode="global", renormalize=True):
+def augment_dictionary_pixelwise(
+    frames_ycbcr: np.ndarray,
+    target_frame: np.ndarray,
+    rho: float = 0.02,
+    tau: float = 0.05,
+    safety: float = 1.25,
+    gamma: Optional[float] = None,
+    mode: str = "global",
+    renormalize: bool = True,
+) -> tuple[np.ndarray, np.ndarray, float, dict[str, Any]]:
     """
     Pixelwise representation for completeness (if later you move from 3 features per frame to full images).
     Input frames shape: (N, H, W, 3). Target: (H, W, 3).
@@ -169,9 +206,9 @@ def augment_dictionary_pixelwise(frames_ycbcr, target_frame, rho=0.02, tau=0.05,
     if C != 3:
         raise ValueError("Expected 3 channels (YCbCr).")
 
-    X = frames_ycbcr.reshape(N, -1).T.astype(float)  # (P, N)
+    X: np.ndarray = frames_ycbcr.reshape(N, -1).T.astype(float)  # (P, N)
     X = normalize(X, axis=0)
-    y = target_frame.reshape(-1).astype(float)
+    y: np.ndarray = target_frame.reshape(-1).astype(float)
     y = y / (np.linalg.norm(y) + 1e-12)
 
     V, w = build_temporal_tags(N, rho=rho)
@@ -180,11 +217,20 @@ def augment_dictionary_pixelwise(frames_ycbcr, target_frame, rho=0.02, tau=0.05,
     if gamma is None:
         gamma = choose_gamma(y, X, delta_w, tau=tau, safety=safety, mode=mode)
 
-    X_aug = np.vstack([X, gamma * V])        # ((P+N), N)
+    X_aug = np.vstack([X, gamma * V])  # ((P+N), N)
     y_aug = np.concatenate([y, np.zeros(N)])
 
     if renormalize:
         X_aug = normalize(X_aug, axis=0)
 
-    meta = {"N": N, "rho": rho, "delta_w": delta_w, "H": H, "W": W, "V": V, "w": w, "gamma": gamma}
+    meta = {
+        "N": N,
+        "rho": rho,
+        "delta_w": delta_w,
+        "H": H,
+        "W": W,
+        "V": V,
+        "w": w,
+        "gamma": gamma,
+    }
     return X_aug, y_aug, float(gamma), meta
