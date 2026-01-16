@@ -160,7 +160,7 @@ def augment_dictionary_framewise(
     if renormalize:
         X_aug = normalize(X_aug, axis=0)
 
-    meta = dict(N=N, rho=rho, delta_w=delta_w, norms=norms, V=V, w=w, gamma=gamma)
+    meta = {"N": N, "rho": rho, "delta_w": delta_w, "norms": norms, "V": V, "w": w, "gamma": gamma}
     return X_aug, y_aug, float(gamma), meta
 
 
@@ -204,5 +204,5 @@ def augment_dictionary_pixelwise(
     if renormalize:
         X_aug = normalize(X_aug, axis=0)
 
-    meta = dict(N=N, rho=rho, delta_w=delta_w, H=H, W=W, V=V, w=w, gamma=gamma)
+    meta = {"N": N, "rho": rho, "delta_w": delta_w, "H": H, "W": W, "V": V, "w": w, "gamma": gamma}
     return X_aug, y_aug, float(gamma), meta

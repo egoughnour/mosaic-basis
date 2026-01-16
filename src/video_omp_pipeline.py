@@ -1,32 +1,32 @@
 import argparse
-import os
-import sys
 import json
+import os
 import shutil
 import subprocess
-from dataclasses import dataclass, asdict
-from typing import Dict, List, Tuple, Optional
+import sys
+from dataclasses import asdict, dataclass
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
 try:
     import cv2
-except Exception as _e:
+except ImportError:
     cv2 = None
 
 try:
     from sklearn.linear_model import OrthogonalMatchingPursuit
-except Exception as _e:
+except ImportError:
     OrthogonalMatchingPursuit = None
 
 try:
     from temporal_omp_aug import augment_dictionary_framewise
-except Exception as _e:
+except ImportError:
     augment_dictionary_framewise = None
 
 try:
     from yt_dlp import YoutubeDL
-except Exception as _e:
+except ImportError:
     YoutubeDL = None
 
 
@@ -81,9 +81,7 @@ def _ffprobe_timestamps(video_path: str) -> Optional[List[float]]:
             "csv=p=0",
             video_path,
         ]
-        proc = subprocess.run(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, text=True
-        )
+        proc = subprocess.run(cmd, capture_output=True, check=False, text=True)
         if proc.returncode != 0:
             return None
         lines = [ln.strip() for ln in proc.stdout.splitlines() if ln.strip()]
@@ -91,7 +89,7 @@ def _ffprobe_timestamps(video_path: str) -> Optional[List[float]]:
         for ln in lines:
             try:
                 ts.append(float(ln))
-            except:
+            except ValueError:
                 pass
         return ts if ts else None
     except Exception:
@@ -214,7 +212,7 @@ def save_to_dir(
         filter_arg = ",".join(vf) if vf else "fps=fps=30"
         out_pattern = os.path.join(out_dir, "frame_%06d.png")
         cmd = ["ffmpeg", "-y", "-i", video_path, "-vf", filter_arg, out_pattern]
-        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc = subprocess.run(cmd, capture_output=True)
         if proc.returncode != 0:
             raise RuntimeError(
                 f"ffmpeg failed: {proc.stderr.decode('utf-8', errors='ignore')}"
@@ -262,7 +260,6 @@ def save_to_dir(
     return frames, timestamps
 
 
-from dataclasses import dataclass
 
 
 @dataclass
@@ -287,12 +284,11 @@ def _create_tracker(tracker_type: str = "CSRT"):
         return cv2.TrackerMIL_create()
     return cv2.TrackerCSRT_create()
 
-
-def _bbox_iou(a: Tuple[int, int, int, int], b: Tuple[int, int, int, int]) -> float:
+def _bbox_iou(a: Tuple[int,int,int,int], b: Tuple[int,int,int,int]) -> float:
     ax, ay, aw, ah = a
     bx, by, bw, bh = b
-    ax2, ay2 = ax + aw, ay + ah
-    bx2, by2 = bx + bw, by + bh
+    ax2, ay2 = ax+aw, ay+ah
+    bx2, by2 = bx+bw, by+bh
     inter_x1, inter_y1 = max(ax, bx), max(ay, by)
     inter_x2, inter_y2 = min(ax2, bx2), min(ay2, by2)
     iw, ih = max(0, inter_x2 - inter_x1), max(0, inter_y2 - inter_y1)
@@ -347,7 +343,7 @@ def detect_and_track(
             for x, y, w, h in dets:
                 new_box = (x, y, w, h)
                 too_close = False
-                for tid, (_tr, last_bbox) in trackers.items():
+                for _tid, (_tr, last_bbox) in trackers.items():
                     iou = _bbox_iou(new_box, last_bbox)
                     if iou > 0.3:
                         too_close = True
@@ -362,7 +358,7 @@ def detect_and_track(
                     next_id += 1
 
         to_remove = []
-        for tid, (tr, last_bbox) in list(trackers.items()):
+        for tid, (tr, _last_bbox) in list(trackers.items()):
             ok_tr, bbox = tr.update(frame)
             if not ok_tr:
                 to_remove.append(tid)
@@ -506,12 +502,12 @@ def process_video_to_omp(
 
     tracklets_json = os.path.join(work_dir, "tracklets.json")
     serial = {
-        tid: dict(
-            track_id=tl.track_id,
-            frames=tl.frames,
-            bboxes=tl.bboxes,
-            ycbcr_series=tl.ycbcr_series,
-        )
+        tid: {
+            "track_id": tl.track_id,
+            "frames": tl.frames,
+            "bboxes": tl.bboxes,
+            "ycbcr_series": tl.ycbcr_series
+        }
         for tid, tl in tracklets.items()
     }
     with open(tracklets_json, "w") as f:

@@ -1,12 +1,13 @@
-import os
+
 import json
-from typing import Dict, List, Tuple, Optional
+import os
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
 try:
     import cv2
-except Exception as _e:
+except ImportError:
     cv2 = None
 
 
@@ -70,9 +71,9 @@ def export_track_previews(
 
     _ensure_dir(out_dir)
 
-    with open(tracklets_json, "r") as f:
+    with open(tracklets_json) as f:
         tracklets = json.load(f)
-    with open(omp_results_json, "r") as f:
+    with open(omp_results_json) as f:
         summary = json.load(f)
     omp_results = summary.get("omp_results", [])
 
@@ -87,7 +88,7 @@ def export_track_previews(
     if not frame_files:
         raise RuntimeError(f"No frames found in {frames_dir}")
     if timestamps_json and os.path.isfile(timestamps_json):
-        with open(timestamps_json, "r") as f:
+        with open(timestamps_json) as f:
             tsj = json.load(f)
             ts = tsj.get("timestamps_sec", None)
 
@@ -153,9 +154,7 @@ def export_track_previews(
                 else:
                     amin = 0.0
                     amax = 0.0
-                _draw_timeline_seconds(
-                    crop, total_sec, current_sec, amin, amax, key_secs, height=10
-                )
+                _draw_timeline_seconds(crop, total_sec, current_sec, amin, amax, key_secs, height=10)
 
             vw.write(crop)
 
@@ -175,9 +174,9 @@ def export_track_previews(
             for i, kcrop in enumerate(keyframe_crops):
                 r = i // cols
                 c = i % cols
-                y0 = r * height
-                x0 = c * width
-                sheet[y0 : y0 + height, x0 : x0 + width] = kcrop
+                y0 = r*height
+                x0 = c*width
+                sheet[y0:y0+height, x0:x0+width] = kcrop
             out_png = os.path.join(out_dir, f"track_{tid:04d}_keyframes.png")
             cv2.imwrite(out_png, sheet)
 

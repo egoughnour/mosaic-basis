@@ -1,12 +1,13 @@
-import os
+
 import json
-from typing import Dict, List, Tuple, Optional
+import os
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
 try:
     import cv2
-except Exception as _e:
+except ImportError:
     cv2 = None
 
 
@@ -75,16 +76,16 @@ def compose_mosaic(
     if cv2 is None:
         raise ImportError("OpenCV (cv2) is required for mosaic composition.")
 
-    with open(tracklets_json, "r") as f:
+    with open(tracklets_json) as f:
         tracklets = json.load(f)
-    with open(omp_results_json, "r") as f:
+    with open(omp_results_json) as f:
         summary = json.load(f)
     omp_results = summary.get("omp_results", [])
 
     # timestamps (seconds)
     ts = None
     if frames_timestamps_json and os.path.isfile(frames_timestamps_json):
-        with open(frames_timestamps_json, "r") as f:
+        with open(frames_timestamps_json) as f:
             tsj = json.load(f)
             ts = tsj.get("timestamps_sec", None)
 
@@ -204,14 +205,14 @@ def compose_mosaic(
         out.write(mosaic)
 
     out.release()
-    return dict(
-        out_video=out_video_path,
-        grid_rows=grid_rows,
-        grid_cols=grid_cols,
-        tile_w=tile_w,
-        tile_h=tile_h,
-        fps=fps,
-    )
+    return {
+        "out_video": out_video_path,
+        "grid_rows": grid_rows,
+        "grid_cols": grid_cols,
+        "tile_w": tile_w,
+        "tile_h": tile_h,
+        "fps": fps
+    }
 
 
 if __name__ == "__main__":
