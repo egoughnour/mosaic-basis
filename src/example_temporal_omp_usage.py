@@ -1,6 +1,7 @@
 
 import numpy as np
 from sklearn.linear_model import OrthogonalMatchingPursuit
+
 from temporal_omp_aug import augment_dictionary_framewise
 
 # Demo: 20 frames, each frame summarized by [Y, Cb, Cr]

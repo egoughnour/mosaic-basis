@@ -4,18 +4,16 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Dict, List
 
 import pytest
-
-cv2 = pytest.importorskip("cv2")
-
 from yt_dlp import YoutubeDL
 from yt_dlp.utils import DownloadError
 
 import mosaic_compositor
 import preview_exporter
 import video_omp_pipeline
+
+cv2 = pytest.importorskip("cv2")
 
 YT_TEST_VIDEO = "https://www.youtube.com/watch?v=V3-HL7MgzzA&t=14s"
 
@@ -53,7 +51,7 @@ def downloaded_video(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
 
 @pytest.fixture(scope="session")
-def extracted_sample(tmp_path_factory: pytest.TempPathFactory, downloaded_video: Path) -> Dict:
+def extracted_sample(tmp_path_factory: pytest.TempPathFactory, downloaded_video: Path) -> dict:
     frames_root = tmp_path_factory.mktemp("frames")
     frames_dir = frames_root / "frames"
     frames, timestamps = video_omp_pipeline.save_to_dir(
@@ -78,8 +76,8 @@ def extracted_sample(tmp_path_factory: pytest.TempPathFactory, downloaded_video:
 
 
 @pytest.fixture
-def tracklet_bundle(tmp_path: Path, extracted_sample: Dict) -> Dict:
-    timestamps: List[float] = extracted_sample["timestamps"]
+def tracklet_bundle(tmp_path: Path, extracted_sample: dict) -> dict:
+    timestamps: list[float] = extracted_sample["timestamps"]
     frame_shape = extracted_sample["frame_shape"]
     track_frames = list(range(min(4, len(extracted_sample["frames"]))))
     if len(track_frames) < 2:
@@ -124,7 +122,7 @@ def tracklet_bundle(tmp_path: Path, extracted_sample: Dict) -> Dict:
     }
 
 
-def test_save_to_dir_generates_monotonic_timestamps(extracted_sample: Dict):
+def test_save_to_dir_generates_monotonic_timestamps(extracted_sample: dict):
     timestamps = extracted_sample["timestamps"]
     frames = extracted_sample["frames"]
     assert len(frames) == len(timestamps)
@@ -133,12 +131,12 @@ def test_save_to_dir_generates_monotonic_timestamps(extracted_sample: Dict):
 
 
 def test_compose_mosaic_uses_real_timestamps(
-    extracted_sample: Dict,
-    tracklet_bundle: Dict,
+    extracted_sample: dict,
+    tracklet_bundle: dict,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ):
-    captured_labels: List[str] = []
+    captured_labels: list[str] = []
     original_put_label = mosaic_compositor._put_label
 
     def capture_label(img, text: str, *args, **kwargs):
@@ -171,12 +169,12 @@ def test_compose_mosaic_uses_real_timestamps(
 
 
 def test_preview_exporter_produces_artifacts_with_timestamps(
-    extracted_sample: Dict,
-    tracklet_bundle: Dict,
+    extracted_sample: dict,
+    tracklet_bundle: dict,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ):
-    captured_labels: List[str] = []
+    captured_labels: list[str] = []
     original_put_label = preview_exporter._put_label
 
     def capture_label(img, text: str, *args, **kwargs):
