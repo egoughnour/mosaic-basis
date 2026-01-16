@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 import numpy as np
 
@@ -36,7 +36,7 @@ def _draw_timeline_seconds(
     current_sec: float,
     active_min_sec: float,
     active_max_sec: float,
-    key_secs: Optional[List[float]] = None,
+    key_secs: Optional[list[float]] = None,
     height: int = 10,
 ):
     h, w = img.shape[:2]
@@ -104,7 +104,7 @@ def compose_mosaic(
         ts = [i / fps for i in range(total_frames)]
         total_sec = ts[-1]
 
-    support_map_local: Dict[int, set] = {}
+    support_map_local: dict[int, set] = {}
     for r in omp_results:
         support_map_local[r["track_id"]] = set(r.get("support", []))
 
@@ -112,9 +112,9 @@ def compose_mosaic(
     max_tiles = grid_rows * grid_cols
     selected_ids = track_ids[:max_tiles]
 
-    per_track_maps: Dict[int, Dict[int, Tuple[Tuple[int, int, int, int], int]]] = {}
-    active_span_sec: Dict[int, Tuple[float, float]] = {}
-    key_secs_map: Dict[int, List[float]] = {}
+    per_track_maps: dict[int, dict[int, tuple[tuple[int, int, int, int], int]]] = {}
+    active_span_sec: dict[int, tuple[float, float]] = {}
+    key_secs_map: dict[int, list[float]] = {}
 
     for tid in selected_ids:
         t = tracklets[str(tid)]

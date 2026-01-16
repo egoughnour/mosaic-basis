@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import sys
 from dataclasses import asdict, dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 import numpy as np
 
@@ -48,7 +48,7 @@ def _is_tool_available(cmd: str) -> bool:
 
 
 def _bgr_to_ycbcr_mean(
-    img_bgr: np.ndarray, bbox: Tuple[int, int, int, int]
+    img_bgr: np.ndarray, bbox: tuple[int, int, int, int]
 ) -> np.ndarray:
     x, y, w, h = bbox
     H, W = img_bgr.shape[:2]
@@ -67,7 +67,7 @@ def _bgr_to_ycbcr_mean(
     return np.array([Y, Cb, Cr], dtype=float)
 
 
-def _ffprobe_timestamps(video_path: str) -> Optional[List[float]]:
+def _ffprobe_timestamps(video_path: str) -> Optional[list[float]]:
     try:
         cmd = [
             "ffprobe",
@@ -96,7 +96,7 @@ def _ffprobe_timestamps(video_path: str) -> Optional[List[float]]:
         return None
 
 
-def _opencv_timestamps(video_path: str, stride: int = 1) -> Optional[List[float]]:
+def _opencv_timestamps(video_path: str, stride: int = 1) -> Optional[list[float]]:
     if cv2 is None:
         return None
     cap = cv2.VideoCapture(video_path)
@@ -118,7 +118,7 @@ def _opencv_timestamps(video_path: str, stride: int = 1) -> Optional[List[float]
 
 def _timestamps_for_extracted_frames(
     video_path: str, out_count: int, fps: Optional[float], stride: int
-) -> List[float]:
+) -> list[float]:
     ts = None
     if _is_tool_available("ffprobe"):
         ts = _ffprobe_timestamps(video_path)
@@ -195,7 +195,7 @@ def save_to_dir(
     stride: int = 1,
     method: str = "auto",
     overwrite: bool = True,
-) -> Tuple[List[str], List[float]]:
+) -> tuple[list[str], list[float]]:
     if overwrite and os.path.isdir(out_dir):
         shutil.rmtree(out_dir)
     _ensure_dir(out_dir)
@@ -263,9 +263,9 @@ def save_to_dir(
 @dataclass
 class Tracklet:
     track_id: int
-    frames: List[int]
-    bboxes: List[Tuple[int, int, int, int]]
-    ycbcr_series: List[List[float]]
+    frames: list[int]
+    bboxes: list[tuple[int, int, int, int]]
+    ycbcr_series: list[list[float]]
 
 
 def _create_tracker(tracker_type: str = "CSRT"):
@@ -283,7 +283,7 @@ def _create_tracker(tracker_type: str = "CSRT"):
     return cv2.TrackerCSRT_create()
 
 
-def _bbox_iou(a: Tuple[int, int, int, int], b: Tuple[int, int, int, int]) -> float:
+def _bbox_iou(a: tuple[int, int, int, int], b: tuple[int, int, int, int]) -> float:
     ax, ay, aw, ah = a
     bx, by, bw, bh = b
     ax2, ay2 = ax + aw, ay + ah
@@ -306,7 +306,7 @@ def detect_and_track(
     bg_history: int = 300,
     var_threshold: float = 16.0,
     detect_area_thresh: int = 400,
-) -> Dict[int, Tracklet]:
+) -> dict[int, Tracklet]:
     if cv2 is None:
         raise ImportError("OpenCV not available; cannot track. Install opencv-python.")
     cap = cv2.VideoCapture(video_path)
@@ -319,7 +319,7 @@ def detect_and_track(
 
     trackers = {}
     next_id = 1
-    tracklets: Dict[int, Tracklet] = {}
+    tracklets: dict[int, Tracklet] = {}
 
     frame_idx = 0
     while True:
@@ -395,15 +395,15 @@ class OMPParams:
 @dataclass
 class OMPResult:
     track_id: int
-    support: List[int]
-    coef: List[float]
+    support: list[int]
+    coef: list[float]
     gamma_used: float
     meta: dict
 
 
 def run_omp_for_track(
     series_ycbcr: np.ndarray, params: OMPParams
-) -> Tuple[np.ndarray, List[int], np.ndarray, float, dict]:
+) -> tuple[np.ndarray, list[int], np.ndarray, float, dict]:
     if augment_dictionary_framewise is None:
         raise ImportError("temporal_omp_aug not found on PYTHONPATH.")
     if OrthogonalMatchingPursuit is None:
@@ -429,9 +429,9 @@ def run_omp_for_track(
 
 
 def run_omp_on_tracklets(
-    tracklets: Dict[int, Tracklet], params: OMPParams
-) -> List[OMPResult]:
-    results: List[OMPResult] = []
+    tracklets: dict[int, Tracklet], params: OMPParams
+) -> list[OMPResult]:
+    results: list[OMPResult] = []
     for tid, tl in tracklets.items():
         series = np.asarray(tl.ycbcr_series, dtype=float)
         coef, support, weights, gamma, meta = run_omp_for_track(series, params)
@@ -471,7 +471,7 @@ class PipelineConfig:
 
 def process_video_to_omp(
     video_path: str, work_dir: str, config: PipelineConfig
-) -> Dict:
+) -> dict:
     frames_dir = os.path.join(work_dir, "frames")
     _ensure_dir(work_dir)
 
@@ -539,7 +539,7 @@ def process_video_to_omp(
     return summary
 
 
-def _parse_cli(argv: List[str]) -> Tuple[argparse.Namespace, PipelineConfig]:
+def _parse_cli(argv: list[str]) -> tuple[argparse.Namespace, PipelineConfig]:
     p = argparse.ArgumentParser("video_omp_pipeline")
     p.add_argument("--video", required=True, help="Input video path")
     p.add_argument(
@@ -604,7 +604,7 @@ def _parse_cli(argv: List[str]) -> Tuple[argparse.Namespace, PipelineConfig]:
     return args, cfg
 
 
-def main(argv: Optional[List[str]] = None):
+def main(argv: Optional[list[str]] = None):
     if argv is None:
         argv = sys.argv[1:]
     args, cfg = _parse_cli(argv)

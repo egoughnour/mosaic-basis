@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 import numpy as np
 
@@ -30,7 +30,7 @@ def _draw_timeline_seconds(
     current_sec: float,
     active_min_sec: float,
     active_max_sec: float,
-    key_secs: Optional[List[float]] = None,
+    key_secs: Optional[list[float]] = None,
     height: int = 10,
 ):
     h, w = img.shape[:2]
@@ -58,7 +58,7 @@ def export_track_previews(
     omp_results_json: str,
     out_dir: str,
     timestamps_json: Optional[str] = None,
-    crop_size: Tuple[int, int] = (256, 256),
+    crop_size: tuple[int, int] = (256, 256),
     fps: int = 15,
     make_keyframe_video: bool = True,
     make_contact_sheet: bool = True,
@@ -98,7 +98,7 @@ def export_track_previews(
         ts = [i / fps for i in range(total_frames)]
         total_sec = ts[-1]
 
-    support_map: Dict[int, List[int]] = {}
+    support_map: dict[int, list[int]] = {}
     for r in omp_results:
         s = sorted(r.get("support", []))
         support_map[r["track_id"]] = s
