@@ -1,7 +1,7 @@
 # mosaic-basis
 
    [![PyPI version](https://badge.fury.io/py/mosaic-basis.svg)](https://badge.fury.io/py/mosaic-basis) [![CI](https://github.com/egoughnour/mosaic-basis/actions/workflows/ci.yml/badge.svg)](https://github.com/egoughnour/mosaic-basis/actions/workflows/ci.yml)
-   ![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
+   ![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
    ![License](https://img.shields.io/badge/license-MIT-blue.svg)
    ![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)
    ![Linting: Ruff](https://img.shields.io/badge/linting-ruff-red.svg)
