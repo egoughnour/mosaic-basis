@@ -260,8 +260,6 @@ def save_to_dir(
     return frames, timestamps
 
 
-
-
 @dataclass
 class Tracklet:
     track_id: int
@@ -284,11 +282,12 @@ def _create_tracker(tracker_type: str = "CSRT"):
         return cv2.TrackerMIL_create()
     return cv2.TrackerCSRT_create()
 
-def _bbox_iou(a: Tuple[int,int,int,int], b: Tuple[int,int,int,int]) -> float:
+
+def _bbox_iou(a: Tuple[int, int, int, int], b: Tuple[int, int, int, int]) -> float:
     ax, ay, aw, ah = a
     bx, by, bw, bh = b
-    ax2, ay2 = ax+aw, ay+ah
-    bx2, by2 = bx+bw, by+bh
+    ax2, ay2 = ax + aw, ay + ah
+    bx2, by2 = bx + bw, by + bh
     inter_x1, inter_y1 = max(ax, bx), max(ay, by)
     inter_x2, inter_y2 = min(ax2, bx2), min(ay2, by2)
     iw, ih = max(0, inter_x2 - inter_x1), max(0, inter_y2 - inter_y1)
@@ -506,7 +505,7 @@ def process_video_to_omp(
             "track_id": tl.track_id,
             "frames": tl.frames,
             "bboxes": tl.bboxes,
-            "ycbcr_series": tl.ycbcr_series
+            "ycbcr_series": tl.ycbcr_series,
         }
         for tid, tl in tracklets.items()
     }

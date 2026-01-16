@@ -1,4 +1,3 @@
-
 import json
 import os
 from typing import Dict, List, Optional, Tuple
@@ -211,7 +210,7 @@ def compose_mosaic(
         "grid_cols": grid_cols,
         "tile_w": tile_w,
         "tile_h": tile_h,
-        "fps": fps
+        "fps": fps,
     }
 
 

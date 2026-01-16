@@ -1,4 +1,3 @@
-
 import json
 import os
 from typing import Dict, List, Optional, Tuple
@@ -154,7 +153,9 @@ def export_track_previews(
                 else:
                     amin = 0.0
                     amax = 0.0
-                _draw_timeline_seconds(crop, total_sec, current_sec, amin, amax, key_secs, height=10)
+                _draw_timeline_seconds(
+                    crop, total_sec, current_sec, amin, amax, key_secs, height=10
+                )
 
             vw.write(crop)
 
@@ -174,9 +175,9 @@ def export_track_previews(
             for i, kcrop in enumerate(keyframe_crops):
                 r = i // cols
                 c = i % cols
-                y0 = r*height
-                x0 = c*width
-                sheet[y0:y0+height, x0:x0+width] = kcrop
+                y0 = r * height
+                x0 = c * width
+                sheet[y0 : y0 + height, x0 : x0 + width] = kcrop
             out_png = os.path.join(out_dir, f"track_{tid:04d}_keyframes.png")
             cv2.imwrite(out_png, sheet)
 
